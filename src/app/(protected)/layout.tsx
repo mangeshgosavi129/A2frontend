@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -13,12 +15,33 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { messageApi } from "@/lib/api";
+import { Message } from "@/lib/types";
+import { format } from "date-fns";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const [notifications, setNotifications] = useState<Message[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await messageApi.getAll({ direction: 'in', is_read: false });
+      setNotifications(res.data);
+      setUnreadCount(res.data.length);
+    } catch (error) {
+      console.error("Failed to fetch notifications", error);
+    }
+  };
+
   return (
     <ProtectedRoute>
       <SidebarProvider>
@@ -30,26 +53,34 @@ export default function ProtectedLayout({
             <div className="flex-1" />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
+                <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white relative">
                   <Bell className="h-5 w-5" />
                   <span className="sr-only">Notifications</span>
-                  <div className="absolute top-3 right-3 h-2 w-2 rounded-full bg-red-500 border border-zinc-950" />
+                  {unreadCount > 0 && (
+                    <div className="absolute top-3 right-3 h-2 w-2 rounded-full bg-red-500 border border-zinc-950" />
+                  )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-80 bg-zinc-950 border-zinc-800 text-zinc-200">
                 <DropdownMenuLabel>Notifications</DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-zinc-800" />
-                <DropdownMenuItem className="focus:bg-zinc-900 focus:text-zinc-100 cursor-pointer flex flex-col items-start gap-1 py-3">
-                    <span className="font-medium text-sm">New Task Assigned</span>
-                    <span className="text-xs text-zinc-500">You have been assigned to "Homepage Redesign"</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="focus:bg-zinc-900 focus:text-zinc-100 cursor-pointer flex flex-col items-start gap-1 py-3">
-                    <span className="font-medium text-sm">Project Deadline</span>
-                    <span className="text-xs text-zinc-500">"Q3 Budget Review" is due tomorrow</span>
-                </DropdownMenuItem>
+                <ScrollArea className="h-[300px]">
+                  {notifications.length === 0 ? (
+                    <div className="py-4 text-center text-sm text-zinc-500">
+                      No new notifications
+                    </div>
+                  ) : (
+                    notifications.map((notification) => (
+                      <DropdownMenuItem key={notification.id} className="focus:bg-zinc-900 focus:text-zinc-100 cursor-pointer flex flex-col items-start gap-1 py-3 border-b border-zinc-900 last:border-0">
+                        <span className="font-medium text-sm">{notification.message_text}</span>
+                        <span className="text-xs text-zinc-500">{format(new Date(notification.created_at), "MMM d, h:mm a")}</span>
+                      </DropdownMenuItem>
+                    ))
+                  )}
+                </ScrollArea>
                 <DropdownMenuSeparator className="bg-zinc-800" />
                 <DropdownMenuItem className="w-full text-center text-xs text-zinc-500 justify-center py-2">
-                    View all notifications
+                  View all notifications
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

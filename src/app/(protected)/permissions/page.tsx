@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Lock, Users, Eye, Edit, Trash } from "lucide-react";
+import { Shield, Lock, Users, Eye, Edit, Trash, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 
 // Mock Roles
@@ -20,21 +21,27 @@ const ROLES = [
 
 // Mock Permissions
 const PERMISSIONS_DATA = [
-    { category: "Tasks", items: [
-        { id: "task_view", label: "View Tasks", roles: ["admin", "manager", "member", "guest"] },
-        { id: "task_create", label: "Create Tasks", roles: ["admin", "manager", "member"] },
-        { id: "task_edit", label: "Edit Tasks", roles: ["admin", "manager", "member"] },
-        { id: "task_delete", label: "Delete Tasks", roles: ["admin", "manager"] },
-    ]},
-    { category: "Users", items: [
-        { id: "user_view", label: "View Users", roles: ["admin", "manager", "member"] },
-        { id: "user_invite", label: "Invite Users", roles: ["admin", "manager"] },
-        { id: "user_manage", label: "Manage Roles", roles: ["admin"] },
-    ]},
-    { category: "Settings", items: [
-        { id: "settings_view", label: "View Settings", roles: ["admin", "manager"] },
-        { id: "settings_edit", label: "Edit Organization Settings", roles: ["admin"] },
-    ]},
+    {
+        category: "Tasks", items: [
+            { id: "task_view", label: "View Tasks", roles: ["admin", "manager", "member", "guest"] },
+            { id: "task_create", label: "Create Tasks", roles: ["admin", "manager", "member"] },
+            { id: "task_edit", label: "Edit Tasks", roles: ["admin", "manager", "member"] },
+            { id: "task_delete", label: "Delete Tasks", roles: ["admin", "manager"] },
+        ]
+    },
+    {
+        category: "Users", items: [
+            { id: "user_view", label: "View Users", roles: ["admin", "manager", "member"] },
+            { id: "user_invite", label: "Invite Users", roles: ["admin", "manager"] },
+            { id: "user_manage", label: "Manage Roles", roles: ["admin"] },
+        ]
+    },
+    {
+        category: "Settings", items: [
+            { id: "settings_view", label: "View Settings", roles: ["admin", "manager"] },
+            { id: "settings_edit", label: "Edit Organization Settings", roles: ["admin"] },
+        ]
+    },
 ];
 
 export default function PermissionsPage() {
@@ -49,7 +56,7 @@ export default function PermissionsPage() {
             items: cat.items.map(item => {
                 if (item.id === permId) {
                     const hasRole = item.roles.includes(activeRole);
-                    const newRoles = hasRole 
+                    const newRoles = hasRole
                         ? item.roles.filter(r => r !== activeRole)
                         : [...item.roles, activeRole];
                     return { ...item, roles: newRoles };
@@ -69,7 +76,7 @@ export default function PermissionsPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-zinc-100">Permissions</h1>
-                    <p className="text-sm text-zinc-500">Configure role-based access control</p>
+                    <p className="text-sm text-zinc-500">Manage role-based access control</p>
                 </div>
                 {hasChanges && (
                     <Button onClick={handleSave} className="bg-primary text-primary-foreground">
@@ -77,6 +84,14 @@ export default function PermissionsPage() {
                     </Button>
                 )}
             </div>
+
+            <Alert className="bg-yellow-500/10 border-yellow-500/20 text-yellow-200">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Note</AlertTitle>
+                <AlertDescription>
+                    Currently all users have full permissions. Role-based access control will be implemented in a future update.
+                </AlertDescription>
+            </Alert>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 {/* Role Selection Sidebar */}
@@ -91,11 +106,10 @@ export default function PermissionsPage() {
                                 <button
                                     key={role.id}
                                     onClick={() => setActiveRole(role.id)}
-                                    className={`flex flex-col items-start p-3 rounded-lg text-left transition-colors ${
-                                        activeRole === role.id 
-                                            ? "bg-zinc-800 border border-zinc-700" 
+                                    className={`flex flex-col items-start p-3 rounded-lg text-left transition-colors ${activeRole === role.id
+                                            ? "bg-zinc-800 border border-zinc-700"
                                             : "hover:bg-zinc-900 border border-transparent"
-                                    }`}
+                                        }`}
                                 >
                                     <span className={`font-medium ${activeRole === role.id ? "text-white" : "text-zinc-400"}`}>
                                         {role.name}
@@ -148,7 +162,7 @@ export default function PermissionsPage() {
                                                         <span className="text-xs text-zinc-500">Allow role to {perm.label.toLowerCase()}</span>
                                                     </div>
                                                 </div>
-                                                <Switch 
+                                                <Switch
                                                     checked={perm.roles.includes(activeRole)}
                                                     onCheckedChange={() => handleToggle(perm.id)}
                                                     className="data-[state=checked]:bg-indigo-500"

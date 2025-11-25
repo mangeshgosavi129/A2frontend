@@ -104,9 +104,9 @@ function TaskCard({ task }: { task: Task }) {
           <MoreHorizontal className="h-4 w-4" />
         </button>
       </div>
-      
+
       <h4 className="font-medium text-sm text-zinc-200 line-clamp-2">{task.title}</h4>
-      
+
       {/* Indicators Row */}
       <div className="flex items-center gap-2 text-xs text-zinc-500">
         {hasChecklist && (
@@ -133,21 +133,33 @@ function TaskCard({ task }: { task: Task }) {
           </div>
         )}
       </div>
-      
+
       <div className="flex items-center justify-between mt-2">
         <div className="flex items-center gap-2 text-xs text-zinc-500">
           {task.deadline && (
-             <span className={cn("flex items-center gap-1", new Date(task.deadline) < new Date() ? "text-red-400" : "")}>
-               <Calendar className="h-3 w-3" />
-               {format(new Date(task.deadline), "MMM d")}
-             </span>
+            <span className={cn("flex items-center gap-1", new Date(task.deadline) < new Date() ? "text-red-400" : "")}>
+              <Calendar className="h-3 w-3" />
+              {format(new Date(task.deadline), "MMM d")}
+            </span>
           )}
         </div>
-        <Avatar className="h-6 w-6 rounded-full border border-zinc-800">
-            <AvatarFallback className="text-[10px] bg-zinc-800 text-zinc-400">
+        <div className="flex -space-x-2">
+          {task.assignees && task.assignees.length > 0 ? (
+            task.assignees.map((assignee) => (
+              <Avatar key={assignee.user_id} className="h-6 w-6 rounded-full border border-zinc-800 ring-2 ring-zinc-900">
+                <AvatarFallback className="text-[10px] bg-zinc-800 text-zinc-400">
+                  {assignee.user_name.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            ))
+          ) : (
+            <Avatar className="h-6 w-6 rounded-full border border-zinc-800">
+              <AvatarFallback className="text-[10px] bg-zinc-800 text-zinc-400">
                 <UserIcon className="h-3 w-3" />
-            </AvatarFallback>
-        </Avatar>
+              </AvatarFallback>
+            </Avatar>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -223,10 +235,10 @@ export function TaskBoard({ tasks, onTaskUpdate, onTaskClick }: TaskBoardProps) 
     const overId = over.id;
 
     const activeTask = active.data.current?.task as Task;
-    
+
     // Check if dropped over a column
     const overColumnId = COLUMNS.find(c => c.id === overId)?.id;
-    
+
     // Check if dropped over another task
     const overTask = over.data.current?.task as Task;
     const overTaskColumnId = overTask?.status;

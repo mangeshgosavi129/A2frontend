@@ -29,7 +29,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-export function AppSidebar() {
+export function AppSidebar({ borderWidth = "1px" }: { borderWidth?: string }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
@@ -68,7 +68,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-white/5 bg-zinc-950 py-4">
+      <SidebarHeader className="border-b border-white/5 bg-zinc-950 py-4" style={{ borderBottomWidth: borderWidth }}>
         <div className="flex items-center gap-2 px-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <CheckSquare className="size-5" />
@@ -102,7 +102,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="border-t border-white/5 bg-zinc-950 p-4">
+      <SidebarFooter className="border-t border-white/5 bg-zinc-950 p-4" style={{ borderTopWidth: borderWidth }}>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton

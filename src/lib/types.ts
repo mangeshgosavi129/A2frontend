@@ -29,7 +29,7 @@ export interface ChecklistItem {
   completed: boolean;
 }
 
-export interface TaskUpdate {
+export interface TaskActivity {
   id?: number;
   user_id?: number;
   user_name?: string;
@@ -53,6 +53,12 @@ export interface VoiceNote {
   uploaded_at: string;
 }
 
+export interface TaskAssignee {
+  user_id: number;
+  user_name: string;
+  assigned_at: string;
+}
+
 export interface Task {
   id: number;
   client_id?: number | null;
@@ -66,12 +72,14 @@ export interface Task {
   progress_description?: string | null;
   progress_percentage?: number | null;
   created_by?: number | null;
+  assigned_to?: number | null;
   cancellation_reason?: string | null;
   created_at: string;
   updated_at: string;
-  updates?: TaskUpdate[];
+  updates?: TaskActivity[];
   attachments?: TaskAttachment[];
   voice_notes?: VoiceNote[];
+  assignees?: TaskAssignee[];
 }
 
 export interface Message {
@@ -107,6 +115,7 @@ export interface TaskCreate {
   deadline?: string;
   checklist?: ChecklistItem[];
   progress_percentage?: number;
+  assigned_to?: number;
 }
 
 export interface TaskUpdate {
@@ -114,8 +123,9 @@ export interface TaskUpdate {
   description?: string;
   status?: TaskStatus;
   priority?: TaskPriority;
-  deadline?: string;
-  end_datetime?: string;
+  deadline?: string | null;
+  end_datetime?: string | null;
   progress_description?: string;
   progress_percentage?: number;
+  assigned_to?: number;
 }

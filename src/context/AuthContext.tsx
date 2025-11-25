@@ -5,10 +5,9 @@ import { useRouter, usePathname } from 'next/navigation';
 import { authApi, userApi, setAuthToken, removeAuthToken } from '@/lib/api';
 import { UserLogin, UserCreate, User } from '@/lib/types';
 import { toast } from 'sonner';
-import { DEMO_USERS, DEMO_CREDENTIALS } from '@/lib/mock-data';
 
 // Demo mode flag - set to true to use mock data
-const DEMO_MODE = true;
+const DEMO_MODE = false;
 
 interface AuthContextType {
   user: User | null;
@@ -31,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initAuth = async () => {
       const token = localStorage.getItem('token');
       const storedUser = localStorage.getItem('user_data');
-      
+
       if (token) {
         setAuthToken(token);
         if (storedUser) {
@@ -51,35 +50,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (data: UserLogin) => {
     try {
       setIsLoading(true);
-      
-      if (DEMO_MODE) {
-        // Demo mode - use mock data
-        const demoUser = DEMO_USERS.find(u => u.phone === data.phone && u.password === data.password);
-        
-        if (!demoUser) {
-          throw new Error('Invalid credentials');
-        }
-        
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        const mockToken = `demo_token_${demoUser.id}`;
-        setAuthToken(mockToken);
-        setUser(demoUser as any);
-        localStorage.setItem('user_data', JSON.stringify(demoUser));
-        toast.success(`Welcome back, ${demoUser.name}!`);
-        router.push('/dashboard');
-        return;
-      }
-      
+
       // Real API mode
       const response = await authApi.login(data);
       const { access_token } = response.data;
       setAuthToken(access_token);
-      
+
       const usersResponse = await userApi.getAll();
       const foundUser = usersResponse.data.find((u: any) => u.phone === data.phone);
-      
+
       if (foundUser) {
         setUser(foundUser);
         localStorage.setItem('user_data', JSON.stringify(foundUser));
@@ -88,10 +67,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         throw new Error('User details not found');
       }
-      
+
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message || error.response?.data?.detail || 'Login failed');
+      const errorMessage = error.response?.data?.detail || error.message || 'Login failed';
+      toast.error(errorMessage);
       throw error;
     } finally {
       setIsLoading(false);
@@ -101,48 +81,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signup = async (data: UserCreate) => {
     try {
       setIsLoading(true);
-      
-      if (DEMO_MODE) {
-        // Demo mode - create new mock user
-        const newUser = {
-          id: DEMO_USERS.length + 1,
-          name: data.name,
-          phone: data.phone,
-          password: data.password,
-          department: data.department || 'General',
-          role: 'User',
-          created_at: new Date().toISOString()
-        };
-        
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        const mockToken = `demo_token_${newUser.id}`;
-        setAuthToken(mockToken);
-        setUser(newUser as any);
-        localStorage.setItem('user_data', JSON.stringify(newUser));
-        toast.success('Account created successfully!');
-        router.push('/dashboard');
-        return;
-      }
-      
+
       // Real API mode
       const response = await authApi.signup(data);
       const { access_token } = response.data;
       setAuthToken(access_token);
-      
+
+      // After signup, we need to fetch user details or construct them
+      // For now, let's fetch all users and find the one we just created
+      // In a real app, signup should return user details
       const usersResponse = await userApi.getAll();
       const foundUser = usersResponse.data.find((u: any) => u.phone === data.phone);
-      
+
       if (foundUser) {
         setUser(foundUser);
         localStorage.setItem('user_data', JSON.stringify(foundUser));
         toast.success('Account created successfully');
         router.push('/dashboard');
+      } else {
+        // Fallback if we can't find the user immediately (shouldn't happen with consistent DB)
+        toast.success('Account created. Please log in.');
+        router.push('/login');
       }
+
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message || error.response?.data?.detail || 'Signup failed');
+      const errorMessage = error.response?.data?.detail || error.message || 'Signup failed';
+      toast.error(errorMessage);
       throw error;
     } finally {
       setIsLoading(false);
@@ -151,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     if (!DEMO_MODE) {
-      authApi.logout().catch(() => {});
+      authApi.logout().catch(() => { });
     }
     removeAuthToken();
     localStorage.removeItem('user_data');
