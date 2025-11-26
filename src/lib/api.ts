@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { UserLogin, UserCreate, Token, TaskCreate, TaskUpdate, Client, Task, Message } from './types';
 
-const API_URL = 'http://localhost:8000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // Demo mode flag - set to true to use mock data
 const DEMO_MODE = false;
