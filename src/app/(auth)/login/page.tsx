@@ -26,9 +26,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
+import { PHONE_REGEX } from "@/lib/utils";
 
 const loginSchema = z.object({
-  phone: z.string().min(10, "Phone number must be at least 10 digits"),
+  phone: z.string().regex(PHONE_REGEX, "Phone number must be 11-13 digits (country code + number) without + sign"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
@@ -79,7 +80,7 @@ export default function LoginPage() {
                       <div className="relative">
                         <Phone className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
                         <Input
-                          placeholder="+1234567890"
+                          placeholder="911234567890"
                           className="border-zinc-800 bg-zinc-900/50 pl-9 text-white placeholder:text-zinc-600 focus-visible:ring-zinc-700"
                           {...field}
                         />

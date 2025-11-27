@@ -27,10 +27,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/context/AuthContext";
+import { PHONE_REGEX } from "@/lib/utils";
 
 const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  phone: z.string().min(10, "Phone number must be at least 10 digits"),
+  phone: z.string().regex(PHONE_REGEX, "Phone number must be 11-13 digits (country code + number) without + sign"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   department: z.string().optional(),
   // For UI purposes only
@@ -124,7 +125,7 @@ export default function SignupPage() {
                     <div className="relative">
                       <Phone className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
                       <Input
-                        placeholder="+1234567890"
+                        placeholder="15551234567"
                         className="border-zinc-800 bg-zinc-900/50 pl-9 text-white placeholder:text-zinc-600 focus-visible:ring-zinc-700"
                         {...field}
                       />
