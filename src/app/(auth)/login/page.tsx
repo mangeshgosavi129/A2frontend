@@ -127,7 +127,7 @@ export default function LoginPage() {
             </form>
           </Form>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex flex-col gap-4">
           <p className="w-full text-center text-sm text-zinc-500">
             Don&apos;t have an account?{" "}
             <Link
@@ -137,6 +137,12 @@ export default function LoginPage() {
               Sign up
             </Link>
           </p>
+          <Link
+            href="/policy"
+            className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
+          >
+            Privacy Policy
+          </Link>
         </CardFooter>
       </Card>
     </div>
