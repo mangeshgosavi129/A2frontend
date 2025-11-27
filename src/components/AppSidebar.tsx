@@ -54,11 +54,11 @@ export function AppSidebar({ borderWidth = "1px" }: { borderWidth?: string }) {
       url: "/users",
       icon: Users,
     },
-    {
-      title: "Permissions",
-      url: "/permissions",
-      icon: Shield,
-    },
+    // {
+    //   title: "Permissions",
+    //   url: "/permissions",
+    //   icon: Shield,
+    // },
     {
       title: "Settings",
       url: "/settings",
