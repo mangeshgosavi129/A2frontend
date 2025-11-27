@@ -20,8 +20,10 @@ import {
 } from "@/components/ui/select";
 import { userApi } from "@/lib/api";
 import { User } from "@/lib/types";
+import { useAuth } from "@/context/AuthContext";
 
 export default function TasksPage() {
+  const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -65,8 +67,13 @@ export default function TasksPage() {
   };
 
   const filteredTasks = tasks.filter(t => {
-    // Apply View Filter (Mock "My Tasks" logic preserved)
-    if (viewFilter === "my" && t.id % 2 === 0) return false;
+    // Apply View Filter
+    if (viewFilter === "my") {
+      if (!user) return false;
+      const isAssignedToMe = t.assigned_to === user.id;
+      const isInDataAssignees = t.assignees?.some(a => a.user_id === user.id);
+      if (!isAssignedToMe && !isInDataAssignees) return false;
+    }
 
     // Apply Dropdown Filters
     if (statusFilter !== "all" && t.status !== statusFilter) return false;
