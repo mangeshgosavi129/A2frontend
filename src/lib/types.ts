@@ -99,6 +99,8 @@ export interface UserCreate {
   phone: string;
   password: string;
   department?: string;
+  org_name?: string;
+  org_id?: number;
 }
 
 export interface UserLogin {

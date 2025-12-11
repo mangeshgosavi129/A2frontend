@@ -58,12 +58,14 @@ export default function SignupPage() {
   async function onSubmit(values: z.infer<typeof signupSchema>) {
     try {
       // Map orgName or orgCode to department if needed, or just send what the API expects
-      // The API expects: name, phone, password, department
+      // The API expects: name, phone, password, department, org_name OR org_id
       const payload = {
         name: values.name,
         phone: values.phone,
         password: values.password,
-        department: mode === "create" ? values.orgName : `Joined: ${values.orgCode}`,
+        department: "",
+        org_name: mode === "create" ? values.orgName : undefined,
+        org_id: mode === "join" ? parseInt(values.orgCode || "0") : undefined,
       };
       await signup(payload);
     } catch (err: any) {
@@ -163,12 +165,13 @@ export default function SignupPage() {
                 name="orgCode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-zinc-300">Organization Code</FormLabel>
+                    <FormLabel className="text-zinc-300">Organization ID</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Building2 className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
                         <Input
-                          placeholder="ORG-123456"
+                          placeholder="e.g. 1"
+                          type="number"
                           className="border-zinc-800 bg-zinc-900/50 pl-9 text-white placeholder:text-zinc-600 focus-visible:ring-zinc-700"
                           {...field}
                         />
