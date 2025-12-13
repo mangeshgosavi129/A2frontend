@@ -8,6 +8,8 @@ export interface User {
   name: string;
   phone: string;
   department?: string | null;
+  role: 'owner' | 'manager' | 'employee' | 'intern';
+  org_id: number;
   created_at: string;
 }
 
@@ -130,4 +132,16 @@ export interface TaskUpdate {
   progress_description?: string;
   progress_percentage?: number;
   assigned_to?: number;
+}
+
+export interface UserRole {
+  user_id: number;
+  user_name: string;
+  role: 'owner' | 'manager' | 'employee' | 'intern';
+  assigned_at: string;
+}
+
+export interface RoleUpdate {
+  user_id: number;
+  role: 'owner' | 'manager' | 'employee' | 'intern';
 }
