@@ -462,32 +462,50 @@ export function TaskDetailSheet({ taskId, open, onOpenChange, onUpdate }: TaskDe
               </div>
               <div className="space-y-1">
                 <span className="text-xs font-medium text-zinc-500">Assignee</span>
-                {isEditingAssignee ? (
-                  <Select value={selectedAssignee?.toString()} onValueChange={(v) => handleAssigneeChange(Number(v))}>
-                    <SelectTrigger className="h-8 bg-zinc-900 border-zinc-800 text-zinc-300">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zinc-900 border-zinc-800">
-                      <SelectItem value="0">Unassigned</SelectItem>
-                      {users.map((user) => (
-                        <SelectItem key={user.id} value={user.id.toString()}>
-                          {user.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <div
-                    className="flex items-center justify-between gap-2 h-8 px-3 rounded-md border border-zinc-800 bg-zinc-900 text-sm text-zinc-300 group cursor-pointer hover:border-zinc-700"
-                    onClick={() => setIsEditingAssignee(true)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <UserIcon className="h-3.5 w-3.5 text-zinc-500" />
-                      {getAssigneeName()}
+                <Popover open={isEditingAssignee} onOpenChange={setIsEditingAssignee}>
+                  <PopoverTrigger asChild>
+                    <div
+                      className="flex items-center justify-between gap-2 h-8 px-3 rounded-md border border-zinc-800 bg-zinc-900 text-sm text-zinc-300 group cursor-pointer hover:border-zinc-700"
+                    >
+                      <div className="flex items-center gap-2">
+                        <UserIcon className="h-3.5 w-3.5 text-zinc-500" />
+                        {getAssigneeName()}
+                      </div>
+                      <Pencil className="h-3 w-3 text-zinc-600 group-hover:text-zinc-400" />
                     </div>
-                    <Pencil className="h-3 w-3 text-zinc-600 group-hover:text-zinc-400" />
-                  </div>
-                )}
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-2 bg-zinc-950 border-zinc-800" align="start">
+                    <div className="space-y-1">
+                      <div
+                        className={cn(
+                          "flex items-center gap-2 px-2 py-1.5 rounded-md text-sm cursor-pointer hover:bg-zinc-800",
+                          !selectedAssignee && "bg-zinc-800"
+                        )}
+                        onClick={() => {
+                          handleAssigneeChange(0);
+                        }}
+                      >
+                        <UserIcon className="h-4 w-4 text-zinc-500" />
+                        <span className="text-zinc-300">Unassigned</span>
+                      </div>
+                      {users.map((user) => (
+                        <div
+                          key={user.id}
+                          className={cn(
+                            "flex items-center gap-2 px-2 py-1.5 rounded-md text-sm cursor-pointer hover:bg-zinc-800",
+                            selectedAssignee === user.id && "bg-zinc-800"
+                          )}
+                          onClick={() => {
+                            handleAssigneeChange(user.id);
+                          }}
+                        >
+                          <UserIcon className="h-4 w-4 text-zinc-500" />
+                          <span className="text-zinc-300">{user.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-1">
                 <span className="text-xs font-medium text-zinc-500">Client</span>
