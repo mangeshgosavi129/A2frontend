@@ -246,7 +246,7 @@ export function TaskCreationModal({
       });
 
       if (values.assigned_to) {
-        await taskApi.assign(res.data.id, parseInt(values.assigned_to));
+        await taskApi.addAssignees(res.data.id, [parseInt(values.assigned_to)]);
       }
       toast.success("Task created successfully");
       onTaskCreated();

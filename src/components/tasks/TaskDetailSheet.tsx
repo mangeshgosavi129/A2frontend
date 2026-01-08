@@ -158,16 +158,16 @@ export function TaskDetailSheet({ taskId, open, onOpenChange, onUpdate }: TaskDe
       if (userId === 0) {
         // Unassign current assignee
         if (oldAssignee) {
-          await taskApi.unassign(task.id, oldAssignee);
+          await taskApi.removeAssignees(task.id, [oldAssignee]);
         }
       } else {
         // If there was an old assignee, unassign them first (to maintain single-assignee behavior for this UI)
         if (oldAssignee && oldAssignee !== userId) {
-          await taskApi.unassign(task.id, oldAssignee);
+          await taskApi.removeAssignees(task.id, [oldAssignee]);
         }
         // Assign new user
         if (oldAssignee !== userId) {
-          await taskApi.assign(task.id, userId);
+          await taskApi.addAssignees(task.id, [userId]);
         }
       }
 
