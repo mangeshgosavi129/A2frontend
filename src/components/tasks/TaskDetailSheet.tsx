@@ -402,74 +402,63 @@ export function TaskDetailSheet({ taskId, open, onOpenChange, onUpdate }: TaskDe
               </div>
               <div className="space-y-1">
                 <span className="text-xs font-medium text-zinc-500">Deadline</span>
-                {isEditingDeadline ? (
-                  <Popover open={isEditingDeadline} onOpenChange={setIsEditingDeadline}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full h-8 px-3 justify-start text-left font-normal bg-zinc-900 border-zinc-800 text-zinc-300"
-                      >
-                        <Calendar className="h-3.5 w-3.5 text-zinc-500 mr-2" />
+                <Popover open={isEditingDeadline} onOpenChange={setIsEditingDeadline}>
+                  <PopoverTrigger asChild>
+                    <div
+                      className="flex items-center justify-between gap-2 h-8 px-3 rounded-md border border-zinc-800 bg-zinc-900 text-sm text-zinc-300 group cursor-pointer hover:border-zinc-700"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-3.5 w-3.5 text-zinc-500" />
                         {task.deadline ? format(new Date(task.deadline), "MMM d, yyyy 'at' h:mm a") : "No deadline"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 bg-zinc-950 border-zinc-800" align="start">
-                      <div className="flex flex-col">
-                        <CalendarComponent
-                          mode="single"
-                          selected={selectedDeadlineDate}
-                          onSelect={setSelectedDeadlineDate}
-                          initialFocus
-                          className="bg-zinc-950 text-zinc-100"
-                        />
-                        <Separator className="bg-zinc-800" />
-                        <div className="p-3 space-y-3">
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-zinc-500" />
-                            <span className="text-sm text-zinc-400">Time</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Input
-                              type="time"
-                              value={selectedDeadlineTime}
-                              onChange={(e) => setSelectedDeadlineTime(e.target.value)}
-                              className="h-8 bg-zinc-900 border-zinc-800 text-zinc-300 w-full [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert"
-                            />
-                          </div>
-                          <div className="flex items-center gap-2 pt-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={handleClearDeadline}
-                              className="flex-1 h-8 text-zinc-400 hover:text-zinc-200"
-                            >
-                              Clear
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={handleDeadlineConfirm}
-                              className="flex-1 h-8"
-                              disabled={!selectedDeadlineDate}
-                            >
-                              Set Deadline
-                            </Button>
-                          </div>
+                      </div>
+                      <Pencil className="h-3 w-3 text-zinc-600 group-hover:text-zinc-400" />
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-zinc-950 border-zinc-800" align="start">
+                    <div className="flex flex-col">
+                      <CalendarComponent
+                        mode="single"
+                        selected={selectedDeadlineDate}
+                        onSelect={setSelectedDeadlineDate}
+                        initialFocus
+                        className="bg-zinc-950 text-zinc-100"
+                      />
+                      <Separator className="bg-zinc-800" />
+                      <div className="p-3 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-zinc-500" />
+                          <span className="text-sm text-zinc-400">Time</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="time"
+                            value={selectedDeadlineTime}
+                            onChange={(e) => setSelectedDeadlineTime(e.target.value)}
+                            className="h-8 bg-zinc-900 border-zinc-800 text-zinc-300 w-full [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2 pt-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleClearDeadline}
+                            className="flex-1 h-8 text-zinc-400 hover:text-zinc-200"
+                          >
+                            Clear
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={handleDeadlineConfirm}
+                            className="flex-1 h-8"
+                            disabled={!selectedDeadlineDate}
+                          >
+                            Set Deadline
+                          </Button>
                         </div>
                       </div>
-                    </PopoverContent>
-                  </Popover>
-                ) : (
-                  <div
-                    className="flex items-center justify-between gap-2 h-8 px-3 rounded-md border border-zinc-800 bg-zinc-900 text-sm text-zinc-300 group cursor-pointer hover:border-zinc-700"
-                    onClick={() => setIsEditingDeadline(true)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-3.5 w-3.5 text-zinc-500" />
-                      {task.deadline ? format(new Date(task.deadline), "MMM d, yyyy 'at' h:mm a") : "No deadline"}
                     </div>
-                    <Pencil className="h-3 w-3 text-zinc-600 group-hover:text-zinc-400" />
-                  </div>
-                )}
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-1">
                 <span className="text-xs font-medium text-zinc-500">Assignee</span>
@@ -671,7 +660,7 @@ export function TaskDetailSheet({ taskId, open, onOpenChange, onUpdate }: TaskDe
             </div>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </DialogContent >
+    </Dialog >
   );
 }
