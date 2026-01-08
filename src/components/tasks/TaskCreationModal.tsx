@@ -4,8 +4,9 @@ import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Calendar as CalendarIcon, Loader2, Sparkles, Send, Plus, X, FileText, Mic, Paperclip, Trash2, User as UserIcon, Building2, AlertCircle, StopCircle } from "lucide-react";
+import { Calendar as CalendarIcon, Loader2, Sparkles, Send, Plus, X, FileText, Mic, Paperclip, Trash2, User as UserIcon, Building2, AlertCircle, StopCircle, Clock } from "lucide-react";
 import { format } from "date-fns";
+import { Separator } from "@/components/ui/separator";
 
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -106,6 +107,9 @@ export function TaskCreationModal({
   // Recording State
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+
+  // Deadline time state
+  const [deadlineTime, setDeadlineTime] = useState<string>("12:00");
 
   const form = useForm<z.infer<typeof taskSchema>>({
     resolver: zodResolver(taskSchema),
@@ -482,25 +486,56 @@ export function TaskCreationModal({
                                 )}
                               >
                                 {field.value ? (
-                                  format(field.value, "PPP")
+                                  format(field.value, "PPP 'at' h:mm a")
                                 ) : (
-                                  <span>Pick a date</span>
+                                  <span>Pick a date and time</span>
                                 )}
                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0 bg-zinc-950 border-zinc-800" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) =>
-                                date < new Date(new Date().setHours(0, 0, 0, 0))
-                              }
-                              initialFocus
-                              className="bg-zinc-950 text-zinc-100"
-                            />
+                            <div className="flex flex-col">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={(date) => {
+                                  if (date) {
+                                    const [hours, minutes] = deadlineTime.split(":").map(Number);
+                                    date.setHours(hours, minutes, 0, 0);
+                                  }
+                                  field.onChange(date);
+                                }}
+                                disabled={(date) =>
+                                  date < new Date(new Date().setHours(0, 0, 0, 0))
+                                }
+                                initialFocus
+                                className="bg-zinc-950 text-zinc-100"
+                              />
+                              <Separator className="bg-zinc-800" />
+                              <div className="p-3 space-y-3">
+                                <div className="flex items-center gap-2">
+                                  <Clock className="h-4 w-4 text-zinc-500" />
+                                  <span className="text-sm text-zinc-400">Time</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    type="time"
+                                    value={deadlineTime}
+                                    onChange={(e) => {
+                                      setDeadlineTime(e.target.value);
+                                      if (field.value) {
+                                        const [hours, minutes] = e.target.value.split(":").map(Number);
+                                        const newDate = new Date(field.value);
+                                        newDate.setHours(hours, minutes, 0, 0);
+                                        field.onChange(newDate);
+                                      }
+                                    }}
+                                    className="h-8 bg-zinc-900 border-zinc-800 text-zinc-300 w-full [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert"
+                                  />
+                                </div>
+                              </div>
+                            </div>
                           </PopoverContent>
                         </Popover>
                         <FormMessage />
