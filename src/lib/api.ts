@@ -60,10 +60,9 @@ export const taskApi = {
   getById: (id: number) => api.get<Task>(`/tasks/${id}`),
   update: (id: number, data: TaskUpdate) => api.put<Task>(`/tasks/${id}`, data),
   cancel: (id: number, reason: string) => api.post<Task>(`/tasks/${id}/cancel`, { cancellation_reason: reason }),
-  assign: (id: number, userId: number) => api.post(`/tasks/${id}/assign`, { user_id: userId }),
-  assignMultiple: (id: number, userIds: number[]) => api.post(`/tasks/${id}/assign-multiple`, { user_ids: userIds }),
-  unassign: (id: number, userId: number) => api.post(`/tasks/${id}/unassign`, { user_id: userId }),
-  getAssignments: (id: number) => api.get<any[]>(`/tasks/${id}/assignments`),
+  addAssignees: (id: number, userIds: number[]) => api.post<{ assigned: number[]; skipped: number[] }>(`/tasks/${id}/assignees`, { user_ids: userIds }),
+  removeAssignees: (id: number, userIds: number[]) => api.delete<{ unassigned_count: number }>(`/tasks/${id}/assignees`, { data: { user_ids: userIds } }),
+  getAssignees: (id: number) => api.get<any[]>(`/tasks/${id}/assignees`),
 
   // Checklist
   addChecklistItem: (taskId: number, item: { text: string, completed: boolean }) => api.post<Task>(`/tasks/${taskId}/checklist/add`, item),

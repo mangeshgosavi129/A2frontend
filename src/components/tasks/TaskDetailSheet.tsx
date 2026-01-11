@@ -5,8 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Task, TaskStatus, TaskPriority, ChecklistItem } from "@/lib/types";
-import { taskApi, userApi } from "@/lib/api";
+import { Task, TaskStatus, TaskPriority, ChecklistItem, Client } from "@/lib/types";
+import { taskApi, userApi, clientApi } from "@/lib/api";
 import { format } from "date-fns";
 import {
   Calendar,
@@ -26,7 +26,8 @@ import {
   Pause,
   Paperclip,
   Pencil,
-  Check
+  Check,
+  Building2
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -61,9 +62,12 @@ export function TaskDetailSheet({ taskId, open, onOpenChange, onUpdate }: TaskDe
   const [newChecklistItem, setNewChecklistItem] = useState("");
   const [newUpdate, setNewUpdate] = useState("");
   const [users, setUsers] = useState<any[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [isEditingDeadline, setIsEditingDeadline] = useState(false);
   const [isEditingAssignee, setIsEditingAssignee] = useState(false);
   const [selectedAssignee, setSelectedAssignee] = useState<number | null>(null);
+  const [selectedDeadlineDate, setSelectedDeadlineDate] = useState<Date | undefined>(undefined);
+  const [selectedDeadlineTime, setSelectedDeadlineTime] = useState<string>("12:00");
 
   // Editable state
   const [editedTitle, setEditedTitle] = useState("");
@@ -73,6 +77,7 @@ export function TaskDetailSheet({ taskId, open, onOpenChange, onUpdate }: TaskDe
     if (open && taskId) {
       fetchTaskDetails(taskId);
       fetchUsers();
+      fetchClients();
     } else {
       setTask(null);
     }
@@ -90,6 +95,15 @@ export function TaskDetailSheet({ taskId, open, onOpenChange, onUpdate }: TaskDe
         ? res.data.assignees[0].user_id
         : null;
       setSelectedAssignee(activeAssignee);
+      // Initialize deadline date and time state
+      if (res.data.deadline) {
+        const deadlineDate = new Date(res.data.deadline);
+        setSelectedDeadlineDate(deadlineDate);
+        setSelectedDeadlineTime(format(deadlineDate, "HH:mm"));
+      } else {
+        setSelectedDeadlineDate(undefined);
+        setSelectedDeadlineTime("12:00");
+      }
     } catch (error) {
       toast.error("Failed to load task details");
       onOpenChange(false);
@@ -104,6 +118,15 @@ export function TaskDetailSheet({ taskId, open, onOpenChange, onUpdate }: TaskDe
       setUsers(res.data);
     } catch (error) {
       console.error("Failed to load users");
+    }
+  };
+
+  const fetchClients = async () => {
+    try {
+      const res = await clientApi.getAll();
+      setClients(res.data);
+    } catch (error) {
+      console.error("Failed to load clients");
     }
   };
 
@@ -133,10 +156,16 @@ export function TaskDetailSheet({ taskId, open, onOpenChange, onUpdate }: TaskDe
     }
   };
 
-  const handleDeadlineChange = async (date: Date | undefined) => {
+  const handleDeadlineConfirm = async () => {
     if (!task) return;
     try {
-      const deadline = date ? date.toISOString() : null;
+      let deadline: string | null = null;
+      if (selectedDeadlineDate) {
+        const [hours, minutes] = selectedDeadlineTime.split(":").map(Number);
+        const combinedDateTime = new Date(selectedDeadlineDate);
+        combinedDateTime.setHours(hours, minutes, 0, 0);
+        deadline = combinedDateTime.toISOString();
+      }
       const updated = { ...task, deadline };
       setTask(updated);
       await taskApi.update(task.id, { deadline });
@@ -145,6 +174,23 @@ export function TaskDetailSheet({ taskId, open, onOpenChange, onUpdate }: TaskDe
       toast.success("Deadline updated");
     } catch (error) {
       toast.error("Failed to update deadline");
+      fetchTaskDetails(task.id);
+    }
+  };
+
+  const handleClearDeadline = async () => {
+    if (!task) return;
+    try {
+      setSelectedDeadlineDate(undefined);
+      setSelectedDeadlineTime("12:00");
+      const updated = { ...task, deadline: null };
+      setTask(updated);
+      await taskApi.update(task.id, { deadline: null });
+      setIsEditingDeadline(false);
+      onUpdate();
+      toast.success("Deadline cleared");
+    } catch (error) {
+      toast.error("Failed to clear deadline");
       fetchTaskDetails(task.id);
     }
   };
@@ -158,16 +204,16 @@ export function TaskDetailSheet({ taskId, open, onOpenChange, onUpdate }: TaskDe
       if (userId === 0) {
         // Unassign current assignee
         if (oldAssignee) {
-          await taskApi.unassign(task.id, oldAssignee);
+          await taskApi.removeAssignees(task.id, [oldAssignee]);
         }
       } else {
         // If there was an old assignee, unassign them first (to maintain single-assignee behavior for this UI)
         if (oldAssignee && oldAssignee !== userId) {
-          await taskApi.unassign(task.id, oldAssignee);
+          await taskApi.removeAssignees(task.id, [oldAssignee]);
         }
         // Assign new user
         if (oldAssignee !== userId) {
-          await taskApi.assign(task.id, userId);
+          await taskApi.addAssignees(task.id, [userId]);
         }
       }
 
@@ -276,6 +322,12 @@ export function TaskDetailSheet({ taskId, open, onOpenChange, onUpdate }: TaskDe
     return user?.name || "Unknown User";
   };
 
+  const getClientName = () => {
+    if (!task?.client_id) return "No client";
+    const client = clients.find(c => c.id === task.client_id);
+    return client?.name || "Unknown Client";
+  };
+
   if (!task && loading) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -350,68 +402,117 @@ export function TaskDetailSheet({ taskId, open, onOpenChange, onUpdate }: TaskDe
               </div>
               <div className="space-y-1">
                 <span className="text-xs font-medium text-zinc-500">Deadline</span>
-                {isEditingDeadline ? (
-                  <Popover open={isEditingDeadline} onOpenChange={setIsEditingDeadline}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full h-8 px-3 justify-start text-left font-normal bg-zinc-900 border-zinc-800 text-zinc-300"
-                      >
-                        <Calendar className="h-3.5 w-3.5 text-zinc-500 mr-2" />
-                        {task.deadline ? format(new Date(task.deadline), "MMM d, yyyy") : "No deadline"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 bg-zinc-950 border-zinc-800" align="start">
+                <Popover open={isEditingDeadline} onOpenChange={setIsEditingDeadline}>
+                  <PopoverTrigger asChild>
+                    <div
+                      className="flex items-center justify-between gap-2 h-8 px-3 rounded-md border border-zinc-800 bg-zinc-900 text-sm text-zinc-300 group cursor-pointer hover:border-zinc-700"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-3.5 w-3.5 text-zinc-500" />
+                        {task.deadline ? format(new Date(task.deadline), "MMM d, yyyy 'at' h:mm a") : "No deadline"}
+                      </div>
+                      <Pencil className="h-3 w-3 text-zinc-600 group-hover:text-zinc-400" />
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-zinc-950 border-zinc-800" align="start">
+                    <div className="flex flex-col">
                       <CalendarComponent
                         mode="single"
-                        selected={task.deadline ? new Date(task.deadline) : undefined}
-                        onSelect={handleDeadlineChange}
+                        selected={selectedDeadlineDate}
+                        onSelect={setSelectedDeadlineDate}
                         initialFocus
                         className="bg-zinc-950 text-zinc-100"
                       />
-                    </PopoverContent>
-                  </Popover>
-                ) : (
-                  <div
-                    className="flex items-center justify-between gap-2 h-8 px-3 rounded-md border border-zinc-800 bg-zinc-900 text-sm text-zinc-300 group cursor-pointer hover:border-zinc-700"
-                    onClick={() => setIsEditingDeadline(true)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-3.5 w-3.5 text-zinc-500" />
-                      {task.deadline ? format(new Date(task.deadline), "MMM d, yyyy") : "No deadline"}
+                      <Separator className="bg-zinc-800" />
+                      <div className="p-3 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-zinc-500" />
+                          <span className="text-sm text-zinc-400">Time</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="time"
+                            value={selectedDeadlineTime}
+                            onChange={(e) => setSelectedDeadlineTime(e.target.value)}
+                            className="h-8 bg-zinc-900 border-zinc-800 text-zinc-300 w-full [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2 pt-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleClearDeadline}
+                            className="flex-1 h-8 text-zinc-400 hover:text-zinc-200"
+                          >
+                            Clear
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={handleDeadlineConfirm}
+                            className="flex-1 h-8"
+                            disabled={!selectedDeadlineDate}
+                          >
+                            Set Deadline
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                    <Pencil className="h-3 w-3 text-zinc-600 group-hover:text-zinc-400" />
-                  </div>
-                )}
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-1">
                 <span className="text-xs font-medium text-zinc-500">Assignee</span>
-                {isEditingAssignee ? (
-                  <Select value={selectedAssignee?.toString()} onValueChange={(v) => handleAssigneeChange(Number(v))}>
-                    <SelectTrigger className="h-8 bg-zinc-900 border-zinc-800 text-zinc-300">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zinc-900 border-zinc-800">
-                      <SelectItem value="0">Unassigned</SelectItem>
-                      {users.map((user) => (
-                        <SelectItem key={user.id} value={user.id.toString()}>
-                          {user.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <div
-                    className="flex items-center justify-between gap-2 h-8 px-3 rounded-md border border-zinc-800 bg-zinc-900 text-sm text-zinc-300 group cursor-pointer hover:border-zinc-700"
-                    onClick={() => setIsEditingAssignee(true)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <UserIcon className="h-3.5 w-3.5 text-zinc-500" />
-                      {getAssigneeName()}
+                <Popover open={isEditingAssignee} onOpenChange={setIsEditingAssignee}>
+                  <PopoverTrigger asChild>
+                    <div
+                      className="flex items-center justify-between gap-2 h-8 px-3 rounded-md border border-zinc-800 bg-zinc-900 text-sm text-zinc-300 group cursor-pointer hover:border-zinc-700"
+                    >
+                      <div className="flex items-center gap-2">
+                        <UserIcon className="h-3.5 w-3.5 text-zinc-500" />
+                        {getAssigneeName()}
+                      </div>
+                      <Pencil className="h-3 w-3 text-zinc-600 group-hover:text-zinc-400" />
                     </div>
-                    <Pencil className="h-3 w-3 text-zinc-600 group-hover:text-zinc-400" />
-                  </div>
-                )}
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-2 bg-zinc-950 border-zinc-800" align="start">
+                    <div className="space-y-1">
+                      <div
+                        className={cn(
+                          "flex items-center gap-2 px-2 py-1.5 rounded-md text-sm cursor-pointer hover:bg-zinc-800",
+                          !selectedAssignee && "bg-zinc-800"
+                        )}
+                        onClick={() => {
+                          handleAssigneeChange(0);
+                        }}
+                      >
+                        <UserIcon className="h-4 w-4 text-zinc-500" />
+                        <span className="text-zinc-300">Unassigned</span>
+                      </div>
+                      {users.map((user) => (
+                        <div
+                          key={user.id}
+                          className={cn(
+                            "flex items-center gap-2 px-2 py-1.5 rounded-md text-sm cursor-pointer hover:bg-zinc-800",
+                            selectedAssignee === user.id && "bg-zinc-800"
+                          )}
+                          onClick={() => {
+                            handleAssigneeChange(user.id);
+                          }}
+                        >
+                          <UserIcon className="h-4 w-4 text-zinc-500" />
+                          <span className="text-zinc-300">{user.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-1">
+                <span className="text-xs font-medium text-zinc-500">Client</span>
+                <div className="flex items-center gap-2 h-8 px-3 rounded-md border border-zinc-800 bg-zinc-900 text-sm text-zinc-300">
+                  <Building2 className="h-3.5 w-3.5 text-zinc-500" />
+                  {getClientName()}
+                </div>
               </div>
             </div>
 
@@ -577,7 +678,7 @@ export function TaskDetailSheet({ taskId, open, onOpenChange, onUpdate }: TaskDe
             </div>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </DialogContent >
+    </Dialog >
   );
 }
