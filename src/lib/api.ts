@@ -72,7 +72,7 @@ export const taskApi = {
 
 export const messageApi = {
   create: (data: any) => api.post<Message>('/messages', data),
-  getAll: (params?: { user_id?: number; task_id?: number; direction?: string; channel?: string }) => api.get<Message[]>('/messages', { params }),
+  getAll: (params?: { user_id?: number; task_id?: number; direction?: string; channel?: string; is_read?: boolean }) => api.get<Message[]>('/messages', { params }),
 };
 
 export const organisationApi = {

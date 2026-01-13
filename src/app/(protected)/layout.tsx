@@ -5,7 +5,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { AppSidebar } from "@/components/AppSidebar";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { Separator } from "@/components/ui/separator";
-import { Bell } from "lucide-react";
+import { Bell, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -88,6 +88,18 @@ export default function ProtectedLayout({
           <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
             {children}
           </div>
+          <a
+            href="https://wa.me/918208513150?text=hi"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="fixed bottom-6 right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-xl hover:bg-[#22c35e] transition-all hover:scale-110 group"
+            title="Chat on WhatsApp"
+          >
+            <MessageCircle className="h-6 w-6" />
+            <span className="absolute right-full mr-3 px-2 py-1 rounded bg-zinc-900 border border-zinc-800 text-xs text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              Chat on WhatsApp
+            </span>
+          </a>
         </SidebarInset>
       </SidebarProvider>
     </ProtectedRoute>

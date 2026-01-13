@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,6 +42,7 @@ const signupSchema = z.object({
 
 export default function SignupPage() {
   const { signup, isLoading } = useAuth();
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState<"create" | "join">("create");
 
   const form = useForm<z.infer<typeof signupSchema>>({
@@ -54,6 +56,14 @@ export default function SignupPage() {
       orgCode: "",
     },
   });
+
+  useEffect(() => {
+    const orgId = searchParams.get("org_id");
+    if (orgId) {
+      setMode("join");
+      form.setValue("orgCode", orgId);
+    }
+  }, [searchParams, form]);
 
   async function onSubmit(values: z.infer<typeof signupSchema>) {
     try {
@@ -85,7 +95,7 @@ export default function SignupPage() {
       </CardHeader>
       <CardContent>
         <Tabs
-          defaultValue="create"
+          value={mode}
           className="w-full mb-6"
           onValueChange={(v) => setMode(v as "create" | "join")}
         >
@@ -210,7 +220,7 @@ export default function SignupPage() {
               disabled={isLoading}
             >
               {isLoading ? (
-                <>\n                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />\n                  Creating account...\n                </>
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating account</>
               ) : (
                 "Create Account"
               )}
