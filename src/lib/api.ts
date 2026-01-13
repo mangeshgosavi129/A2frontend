@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { UserLogin, UserCreate, Token, TaskCreate, TaskUpdate, Client, Task, Message, RoleUpdate, UserRole } from './types';
+import { UserLogin, UserCreate, Token, TaskCreate, TaskUpdate, Client, Task, Message, RoleUpdate, UserRole, Organisation } from './types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -76,6 +76,8 @@ export const messageApi = {
 };
 
 export const organisationApi = {
+  getAll: () => api.get<Organisation[]>('/organisations'),
+  getById: (orgId: number) => api.get<Organisation>(`/organisations/${orgId}`),
   getRoles: (orgId: number) => api.get<UserRole[]>(`/organisations/${orgId}/roles`),
   updateRole: (orgId: number, data: RoleUpdate) => api.post(`/organisations/${orgId}/roles`, data),
 };

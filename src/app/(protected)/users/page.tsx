@@ -86,6 +86,16 @@ export default function UsersPage() {
     setIsDetailOpen(true);
   };
 
+  const handleInvite = () => {
+    if (!currentUser?.org_id) {
+      toast.error("Organization ID not found");
+      return;
+    }
+    const inviteLink = `${window.location.origin}/signup?org_id=${currentUser.org_id}`;
+    navigator.clipboard.writeText(inviteLink);
+    toast.success("Invite link copied to clipboard");
+  };
+
   return (
     <div className="flex flex-col h-full gap-4">
       <div className="flex items-center justify-between">
@@ -93,7 +103,11 @@ export default function UsersPage() {
           <h1 className="text-2xl font-bold text-zinc-100">Team Members</h1>
           <p className="text-sm text-zinc-500">Manage your organization's users</p>
         </div>
-        <Button variant="outline" className="border-zinc-800 text-zinc-300 hover:bg-zinc-900">
+        <Button
+          variant="outline"
+          className="border-zinc-800 text-zinc-300 hover:bg-zinc-900"
+          onClick={handleInvite}
+        >
           Invite User
         </Button>
       </div>

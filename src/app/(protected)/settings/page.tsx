@@ -29,17 +29,32 @@ import {
     AlertCircle
 } from "lucide-react";
 import { format } from "date-fns";
-import { messageApi } from "@/lib/api";
-import { Message } from "@/lib/types";
+import { messageApi, organisationApi } from "@/lib/api";
+import { Message, Organisation } from "@/lib/types";
+import { useAuth } from "@/context/AuthContext";
 
 export default function SettingsPage() {
+    const { user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [activityLogs, setActivityLogs] = useState<Message[]>([]);
     const [loadingLogs, setLoadingLogs] = useState(false);
+    const [organisation, setOrganisation] = useState<Organisation | null>(null);
 
     useEffect(() => {
         fetchActivityLogs();
-    }, []);
+        if (user?.org_id) {
+            fetchOrganisation(user.org_id);
+        }
+    }, [user?.org_id]);
+
+    const fetchOrganisation = async (orgId: number) => {
+        try {
+            const res = await organisationApi.getById(orgId);
+            setOrganisation(res.data);
+        } catch (error) {
+            console.error("Failed to fetch organisation", error);
+        }
+    };
 
     const fetchActivityLogs = async () => {
         try {
@@ -105,15 +120,28 @@ export default function SettingsPage() {
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
                                     <Label className="text-zinc-300">Organization Name</Label>
-                                    <Input defaultValue="Acme Corp" className="bg-zinc-900 border-zinc-800 text-zinc-200" />
+                                    <Input
+                                        key={organisation?.id ? `org-name-${organisation.id}` : 'loading'}
+                                        defaultValue={organisation?.name || user?.department || "Urbounce Org"}
+                                        className="bg-zinc-900 border-zinc-800 text-zinc-200"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-zinc-300">Organization ID</Label>
+                                    <Input value={user?.org_id || ""} readOnly className="bg-zinc-900 border-zinc-800 text-zinc-400 cursor-not-allowed" />
+                                    <p className="text-xs text-zinc-500">Share this ID with team members to join your organization</p>
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-zinc-300">Workspace URL</Label>
                                     <div className="flex">
                                         <span className="flex items-center px-3 border border-r-0 border-zinc-800 bg-zinc-900 text-zinc-500 rounded-l-md text-sm">
-                                            taskmaster.app/
+                                            gsstask.vercel.app/
                                         </span>
-                                        <Input defaultValue="acme-corp" className="rounded-l-none bg-zinc-900 border-zinc-800 text-zinc-200" />
+                                        <Input
+                                            key={organisation?.id ? `org-url-${organisation.id}` : 'loading'}
+                                            defaultValue={organisation?.name?.toLowerCase().replace(/\s+/g, '-') || "workspace"}
+                                            className="rounded-l-none bg-zinc-900 border-zinc-800 text-zinc-200"
+                                        />
                                     </div>
                                 </div>
                                 <div className="pt-4 flex justify-end">

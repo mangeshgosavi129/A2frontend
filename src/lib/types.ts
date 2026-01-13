@@ -145,3 +145,9 @@ export interface RoleUpdate {
   user_id: number;
   role: 'owner' | 'manager' | 'employee' | 'intern';
 }
+
+export interface Organisation {
+  id: number;
+  name: string;
+  created_at: string;
+}

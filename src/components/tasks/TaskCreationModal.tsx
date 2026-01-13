@@ -7,6 +7,7 @@ import * as z from "zod";
 import { Calendar as CalendarIcon, Loader2, Sparkles, Send, Plus, X, FileText, Mic, Paperclip, Trash2, User as UserIcon, Building2, AlertCircle, StopCircle, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
 
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -56,7 +57,7 @@ const taskSchema = z.object({
   deadline: z.date().optional(),
   checklist: z.array(z.object({ text: z.string(), completed: z.boolean() })).optional(),
   client_id: z.string().optional(), // Using string for Select value, will convert to number
-  assigned_to: z.string().optional(),
+  assigned_to: z.array(z.string()).optional(),
 });
 
 interface TaskCreationModalProps {
@@ -119,7 +120,7 @@ export function TaskCreationModal({
       priority: "medium",
       checklist: [],
       client_id: undefined,
-      assigned_to: undefined,
+      assigned_to: [],
     },
   });
 
@@ -246,11 +247,11 @@ export function TaskCreationModal({
         status: "assigned",
         progress_percentage: 0,
         client_id: values.client_id ? parseInt(values.client_id) : undefined,
-        assigned_to: undefined,
+        assigned_to: undefined, // This will be handled by addAssignees separately
       });
 
-      if (values.assigned_to) {
-        await taskApi.addAssignees(res.data.id, [parseInt(values.assigned_to)]);
+      if (values.assigned_to && values.assigned_to.length > 0) {
+        await taskApi.addAssignees(res.data.id, values.assigned_to.map(id => parseInt(id)));
       }
       toast.success("Task created successfully");
       onTaskCreated();
@@ -449,21 +450,33 @@ export function TaskCreationModal({
                     name="assigned_to"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Assignee</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger className="bg-zinc-900 border-zinc-800">
-                              <SelectValue placeholder="Select assignee" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent className="bg-zinc-900 border-zinc-800">
+                        <FormLabel>Assignees</FormLabel>
+                        <FormControl>
+                          <div className="grid grid-cols-2 gap-2 mt-2 bg-zinc-900 border border-zinc-800 rounded-md p-3 max-h-[150px] overflow-y-auto">
                             {users.map((user) => (
-                              <SelectItem key={user.id} value={user.id.toString()}>
-                                {user.name}
-                              </SelectItem>
+                              <div key={user.id} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`user-${user.id}`}
+                                  checked={field.value?.includes(user.id.toString())}
+                                  onCheckedChange={(checked) => {
+                                    const currentValues = field.value || [];
+                                    const newValue = checked
+                                      ? [...currentValues, user.id.toString()]
+                                      : currentValues.filter((id) => id !== user.id.toString());
+                                    field.onChange(newValue);
+                                  }}
+                                  className="border-zinc-700"
+                                />
+                                <Label
+                                  htmlFor={`user-${user.id}`}
+                                  className="text-sm text-zinc-300 font-normal cursor-pointer"
+                                >
+                                  {user.name}
+                                </Label>
+                              </div>
                             ))}
-                          </SelectContent>
-                        </Select>
+                          </div>
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
