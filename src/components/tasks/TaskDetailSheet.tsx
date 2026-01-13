@@ -65,7 +65,7 @@ export function TaskDetailSheet({ taskId, open, onOpenChange, onUpdate }: TaskDe
   const [clients, setClients] = useState<Client[]>([]);
   const [isEditingDeadline, setIsEditingDeadline] = useState(false);
   const [isEditingAssignee, setIsEditingAssignee] = useState(false);
-  const [selectedAssignee, setSelectedAssignee] = useState<number | null>(null);
+  const [selectedAssignees, setSelectedAssignees] = useState<number[]>([]);
   const [selectedDeadlineDate, setSelectedDeadlineDate] = useState<Date | undefined>(undefined);
   const [selectedDeadlineTime, setSelectedDeadlineTime] = useState<string>("12:00");
 
@@ -90,11 +90,9 @@ export function TaskDetailSheet({ taskId, open, onOpenChange, onUpdate }: TaskDe
       setTask(res.data);
       setEditedTitle(res.data.title);
       setEditedDescription(res.data.description || "");
-      // Derive selected assignee from assignees list (take the first one for now)
-      const activeAssignee = res.data.assignees && res.data.assignees.length > 0
-        ? res.data.assignees[0].user_id
-        : null;
-      setSelectedAssignee(activeAssignee);
+      // Initialize selected assignees
+      const activeAssigneeIds = res.data.assignees?.map(a => a.user_id) || [];
+      setSelectedAssignees(activeAssigneeIds);
       // Initialize deadline date and time state
       if (res.data.deadline) {
         const deadlineDate = new Date(res.data.deadline);
@@ -195,37 +193,38 @@ export function TaskDetailSheet({ taskId, open, onOpenChange, onUpdate }: TaskDe
     }
   };
 
-  const handleAssigneeChange = async (userId: number) => {
+  const handleSaveAssignees = async () => {
     if (!task) return;
     try {
-      const oldAssignee = selectedAssignee;
-      setSelectedAssignee(userId);
+      const currentAssigneeIds = task.assignees?.map(a => a.user_id) || [];
 
-      if (userId === 0) {
-        // Unassign current assignee
-        if (oldAssignee) {
-          await taskApi.removeAssignees(task.id, [oldAssignee]);
-        }
-      } else {
-        // If there was an old assignee, unassign them first (to maintain single-assignee behavior for this UI)
-        if (oldAssignee && oldAssignee !== userId) {
-          await taskApi.removeAssignees(task.id, [oldAssignee]);
-        }
-        // Assign new user
-        if (oldAssignee !== userId) {
-          await taskApi.addAssignees(task.id, [userId]);
-        }
+      const toAdd = selectedAssignees.filter(id => !currentAssigneeIds.includes(id));
+      const toRemove = currentAssigneeIds.filter(id => !selectedAssignees.includes(id));
+
+      if (toAdd.length > 0) {
+        await taskApi.addAssignees(task.id, toAdd);
+      }
+
+      if (toRemove.length > 0) {
+        await taskApi.removeAssignees(task.id, toRemove);
       }
 
       setIsEditingAssignee(false);
       onUpdate();
-      toast.success("Assignee updated");
-      // Refresh task details to get updated assignees list
+      toast.success("Assignees updated");
       fetchTaskDetails(task.id);
     } catch (error) {
-      toast.error("Failed to update assignee");
+      toast.error("Failed to update assignees");
       fetchTaskDetails(task.id);
     }
+  };
+
+  const toggleAssignee = (userId: number) => {
+    setSelectedAssignees(prev =>
+      prev.includes(userId)
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
   };
 
   const handleAddChecklistItem = async (e: React.FormEvent) => {
@@ -316,10 +315,10 @@ export function TaskDetailSheet({ taskId, open, onOpenChange, onUpdate }: TaskDe
     }
   };
 
-  const getAssigneeName = () => {
-    if (!selectedAssignee) return "Unassigned";
-    const user = users.find(u => u.id === selectedAssignee);
-    return user?.name || "Unknown User";
+  const getAssigneeDisplay = () => {
+    if (!task?.assignees || task.assignees.length === 0) return "Unassigned";
+    if (task.assignees.length === 1) return task.assignees[0].user_name;
+    return `${task.assignees[0].user_name} + ${task.assignees.length - 1} more`;
   };
 
   const getClientName = () => {
@@ -469,40 +468,53 @@ export function TaskDetailSheet({ taskId, open, onOpenChange, onUpdate }: TaskDe
                     >
                       <div className="flex items-center gap-2">
                         <UserIcon className="h-3.5 w-3.5 text-zinc-500" />
-                        {getAssigneeName()}
+                        {getAssigneeDisplay()}
                       </div>
                       <Pencil className="h-3 w-3 text-zinc-600 group-hover:text-zinc-400" />
                     </div>
                   </PopoverTrigger>
-                  <PopoverContent className="w-56 p-2 bg-zinc-950 border-zinc-800" align="start">
-                    <div className="space-y-1">
-                      <div
-                        className={cn(
-                          "flex items-center gap-2 px-2 py-1.5 rounded-md text-sm cursor-pointer hover:bg-zinc-800",
-                          !selectedAssignee && "bg-zinc-800"
-                        )}
-                        onClick={() => {
-                          handleAssigneeChange(0);
-                        }}
-                      >
-                        <UserIcon className="h-4 w-4 text-zinc-500" />
-                        <span className="text-zinc-300">Unassigned</span>
+                  <PopoverContent className="w-64 p-3 bg-zinc-950 border-zinc-800" align="start">
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-medium text-zinc-500 px-1">Select Assignees</h4>
+                      <div className="space-y-1 max-h-[200px] overflow-y-auto pr-1">
+                        {users.map((user) => (
+                          <div
+                            key={user.id}
+                            className={cn(
+                              "flex items-center gap-2 px-2 py-1.5 rounded-md text-sm cursor-pointer hover:bg-zinc-900 group",
+                              selectedAssignees.includes(user.id) && "bg-zinc-900/50"
+                            )}
+                            onClick={() => toggleAssignee(user.id)}
+                          >
+                            <Checkbox
+                              checked={selectedAssignees.includes(user.id)}
+                              onCheckedChange={() => toggleAssignee(user.id)}
+                              className="border-zinc-700"
+                            />
+                            <span className="text-zinc-300 group-hover:text-zinc-100">{user.name}</span>
+                          </div>
+                        ))}
                       </div>
-                      {users.map((user) => (
-                        <div
-                          key={user.id}
-                          className={cn(
-                            "flex items-center gap-2 px-2 py-1.5 rounded-md text-sm cursor-pointer hover:bg-zinc-800",
-                            selectedAssignee === user.id && "bg-zinc-800"
-                          )}
+                      <div className="pt-2 border-t border-zinc-800 flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="flex-1 h-8 text-xs text-zinc-400 hover:text-zinc-200"
                           onClick={() => {
-                            handleAssigneeChange(user.id);
+                            setSelectedAssignees(task.assignees?.map(a => a.user_id) || []);
+                            setIsEditingAssignee(false);
                           }}
                         >
-                          <UserIcon className="h-4 w-4 text-zinc-500" />
-                          <span className="text-zinc-300">{user.name}</span>
-                        </div>
-                      ))}
+                          Cancel
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="flex-1 h-8 text-xs"
+                          onClick={handleSaveAssignees}
+                        >
+                          Confirm
+                        </Button>
+                      </div>
                     </div>
                   </PopoverContent>
                 </Popover>
