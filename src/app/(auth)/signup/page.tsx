@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -40,7 +40,7 @@ const signupSchema = z.object({
   orgCode: z.string().optional(),
 });
 
-export default function SignupPage() {
+function SignupForm() {
   const { signup, isLoading } = useAuth();
   const searchParams = useSearchParams();
   const [mode, setMode] = useState<"create" | "join">("create");
@@ -246,5 +246,20 @@ export default function SignupPage() {
         </Link>
       </CardFooter>
     </Card>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <Card className="w-full border-zinc-800 bg-zinc-950/50 backdrop-blur-xl">
+        <CardHeader className="space-y-1 text-center">
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-white" />
+          <CardDescription className="mt-2 text-zinc-400">Loading signup form...</CardDescription>
+        </CardHeader>
+      </Card>
+    }>
+      <SignupForm />
+    </Suspense>
   );
 }
