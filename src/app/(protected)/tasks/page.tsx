@@ -31,7 +31,7 @@ export default function TasksPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false);
-  const [viewFilter, setViewFilter] = useState<"all" | "my">("all");
+  const [viewFilter, setViewFilter] = useState<"team" | "personal">("team");
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -71,11 +71,18 @@ export default function TasksPage() {
 
   const filteredTasks = tasks.filter(t => {
     // Apply View Filter
-    if (viewFilter === "my") {
-      if (!user) return false;
-      const isAssignedToMe = t.assigned_to === user.id;
-      const isInDataAssignees = t.assignees?.some(a => a.user_id === user.id);
-      if (!isAssignedToMe && !isInDataAssignees) return false;
+    if (!user) return false;
+
+    if (viewFilter === "team") {
+      const assignedByMe = t.created_by === user.id;
+      const assignedToOthers = (t.assigned_to !== null && t.assigned_to !== user.id) ||
+        t.assignees?.some(a => a.user_id !== user.id);
+      if (!assignedByMe || !assignedToOthers) return false;
+    } else if (viewFilter === "personal") {
+      const assignedToMe = t.assigned_to === user.id ||
+        t.assignees?.some(a => a.user_id === user.id);
+      const assignedByMe = t.created_by === user.id;
+      if (!assignedToMe || assignedByMe) return false;
     }
 
     // Apply Dropdown Filters
@@ -284,16 +291,16 @@ export default function TasksPage() {
 
           <div className="flex bg-zinc-900 p-1 rounded-lg border border-zinc-800">
             <button
-              onClick={() => setViewFilter("all")}
-              className={cn("px-3 py-1.5 text-sm font-medium rounded-md transition-colors", viewFilter === "all" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-400 hover:text-zinc-200")}
+              onClick={() => setViewFilter("team")}
+              className={cn("px-3 py-1.5 text-sm font-medium rounded-md transition-colors", viewFilter === "team" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-400 hover:text-zinc-200")}
             >
-              All Tasks
+              Team Tasks
             </button>
             <button
-              onClick={() => setViewFilter("my")}
-              className={cn("px-3 py-1.5 text-sm font-medium rounded-md transition-colors", viewFilter === "my" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-400 hover:text-zinc-200")}
+              onClick={() => setViewFilter("personal")}
+              className={cn("px-3 py-1.5 text-sm font-medium rounded-md transition-colors", viewFilter === "personal" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-400 hover:text-zinc-200")}
             >
-              My Tasks
+              Personal Tasks
             </button>
           </div>
           <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2">
