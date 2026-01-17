@@ -31,7 +31,7 @@ export default function TasksPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false);
-  const [viewFilter, setViewFilter] = useState<"team" | "personal">("team");
+  const [viewFilter, setViewFilter] = useState<"all" | "team" | "personal">("all");
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -83,6 +83,9 @@ export default function TasksPage() {
         t.assignees?.some(a => a.user_id === user.id);
       const assignedByMe = t.created_by === user.id;
       if (!assignedToMe || assignedByMe) return false;
+    } else if (viewFilter === "all") {
+      // Role-based visibility is handled by the backend token
+      return true;
     }
 
     // Apply Dropdown Filters
@@ -197,10 +200,6 @@ export default function TasksPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-5rem)] gap-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-zinc-100">Tasks</h1>
-          <p className="text-sm text-zinc-500">Manage and track your team's work</p>
-        </div>
         <div className="flex items-center gap-2">
           <div className="flex gap-2 mr-2">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -290,6 +289,12 @@ export default function TasksPage() {
           </div>
 
           <div className="flex bg-zinc-900 p-1 rounded-lg border border-zinc-800">
+            <button
+              onClick={() => setViewFilter("all")}
+              className={cn("px-3 py-1.5 text-sm font-medium rounded-md transition-colors", viewFilter === "all" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-400 hover:text-zinc-200")}
+            >
+              All Tasks
+            </button>
             <button
               onClick={() => setViewFilter("team")}
               className={cn("px-3 py-1.5 text-sm font-medium rounded-md transition-colors", viewFilter === "team" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-400 hover:text-zinc-200")}
