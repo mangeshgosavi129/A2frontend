@@ -199,8 +199,8 @@ export default function TasksPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-5rem)] gap-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="flex gap-2 mr-2">
+        <div className="flex items-center gap-4">
+          <div className="flex gap-2">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[120px] h-9 bg-zinc-900 border-zinc-800 text-xs">
                 <SelectValue placeholder="Status" />
@@ -307,11 +307,11 @@ export default function TasksPage() {
               Personal Tasks
             </button>
           </div>
-          <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2">
-            <Plus className="h-4 w-4" />
-            New Task
-          </Button>
         </div>
+        <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2">
+          <Plus className="h-4 w-4" />
+          New Task
+        </Button>
       </div>
 
       <Tabs defaultValue="board" className="flex-1 flex flex-col min-h-0">
