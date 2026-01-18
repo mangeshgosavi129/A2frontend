@@ -84,8 +84,7 @@ export default function TasksPage() {
       const assignedByMe = t.created_by === user.id;
       if (!assignedToMe || assignedByMe) return false;
     } else if (viewFilter === "all") {
-      // Role-based visibility is handled by the backend token
-      return true;
+      // Role-based visibility is handled by the backend token, so we proceed to other filters
     }
 
     // Apply Dropdown Filters
